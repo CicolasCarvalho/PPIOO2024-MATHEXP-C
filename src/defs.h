@@ -7,7 +7,7 @@
 
 //-debug-info-----------------------------------------------------------------------------------------------------------
 
-#define DEBUG_INFO 0
+#define DEBUG_INFO 1
 
 //-log-utilities--------------------------------------------------------------------------------------------------------
 
@@ -82,6 +82,8 @@
 #define DIV         ((uint8_t)0b00010000) // 16
 #define PAREN_OPEN  ((uint8_t)0b00100000) // 32
 #define PAREN_CLOSE ((uint8_t)0b01000000) // 64
+
+#define UNARY_FLAG  ((uint8_t)0b10000000) // 128
 
 #define OPERATOR    (SUM | SUB | MUL | DIV)
 

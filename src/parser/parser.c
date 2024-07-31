@@ -65,7 +65,6 @@ static TreeNode *TreeNode_build(RPNExp *exp, int32_t *i) {
     Token actual_token = exp->tokens[*i];
     TreeNode *node = TreeNode_new(actual_token);
 
-    PRINT("(%i, %i, %li)", *i, node->token.type, node->token.value);
     if (actual_token.type == LITERAL) {
         return node;
     }
@@ -73,14 +72,14 @@ static TreeNode *TreeNode_build(RPNExp *exp, int32_t *i) {
     int32_t right = (*i) - 1;
     node->right = TreeNode_build(exp, &right);
 
-    int32_t left = right - 1;
-    node->left = TreeNode_build(exp, &left);
-
-    *i = left;
-
-    if (node->left == NULL && actual_token.type & (SUB | SUM)) {
+    if (actual_token.type & UNARY_FLAG) {
+        *i = right;
         return node;
     }
+
+    int32_t left = right - 1;
+    node->left = TreeNode_build(exp, &left);
+    *i = left;
 
     if (node->left == NULL || node->right == NULL) {
         RAISE("Erro de sintaxe");

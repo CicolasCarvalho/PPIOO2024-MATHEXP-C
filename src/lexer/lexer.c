@@ -57,16 +57,23 @@ TokenExp *tokenize_str(char *str) {
     TokenExp *token_exp = TokenExp_new();
 
     char buffer[MAX_TOKEN_SIZE];
-    uint8_t last_token = 0;
+    buffer[0] = '\0';
+    uint8_t last_token = NULL_OPS;
 
     do {
         shift_str_token(&str, buffer, last_token);
         PRINT("'%s' - '%s'", buffer, str);
 
-        if (*buffer == '+' && buffer[1] == '\0') {
+        if (*buffer == '-' && (last_token & (OPERATOR | PAREN_OPEN) || last_token == NULL_OPS)) {
+            TokenExp_push(token_exp, SUB | UNARY_FLAG, '|');
+            last_token = SUB | UNARY_FLAG;
+        } else if (*buffer == '+' && (last_token & (OPERATOR | PAREN_OPEN) || last_token == NULL_OPS)) {
+            TokenExp_push(token_exp, SUM | UNARY_FLAG, 'x');
+            last_token = SUM | UNARY_FLAG;
+        } else if (*buffer == '+') {
             TokenExp_push(token_exp, SUM, '+');
             last_token = SUM;
-        } else if (*buffer == '-' && buffer[1] == '\0') {
+        } else if (*buffer == '-') {
             TokenExp_push(token_exp, SUB, '-');
             last_token = SUB;
         } else if (*buffer == '*') {
@@ -176,7 +183,9 @@ static void TokenExp_print(TokenExp *exp) {
     for (uint32_t i = 0; i < exp->size; ++i) {
         switch (exp->tokens[i].type) {
             case SUM:
+            case SUM | UNARY_FLAG:
             case SUB:
+            case SUB | UNARY_FLAG:
             case MUL:
             case DIV:
             case PAREN_OPEN:
@@ -213,21 +222,26 @@ static void shift_str_token(char **str, char dst[MAX_TOKEN_SIZE], uint8_t last_t
 
         char c = (**str);
 
-        if (len > 0 && (c == '+' || c == '-' || c == '*' || c == '/' || c == '(' || c == ')')) {
-            break;
-        }
-
         if (!is_number(c) && c != '+' && c != '-' && c != '*' && c != '/' && c != '(' && c != ')') {
             RAISE("Erro de sintaxe");
+        }
+
+        if (len > 0 && (c == '+' || c == '-' || c == '*' || c == '/' || c == '(' || c == ')')) {
+            break;
         }
 
         dst[len++] = c;
         dst[len] = '\0';
         (*str)++;
 
-        if (c == '(' || c == ')') break;
+        if (c == '(' || c == ')' || c == '+' || c == '-') break;
 
-        if (c == '*' || c == '/' || (c == '+' && (last_token & (LITERAL | PAREN_CLOSE))) || (c == '-' && (last_token & (LITERAL | PAREN_CLOSE)))) {
+        if (
+            // (c == '+' && (last_token & (LITERAL | PAREN_CLOSE))) ||
+            // (c == '-' && (last_token & (LITERAL | PAREN_CLOSE))) ||
+            c == '*' ||
+            c == '/'
+        ) {
             if (last_token & OPERATOR) {
                 RAISE("Erro de sintaxe");
             }
@@ -244,14 +258,16 @@ static int8_t precedence_test(TokenStack *stack, Token token) {
     }
 
     int8_t token_priority = -1;
-    if (token.type & (SUM | SUB)) token_priority = 0;
-    if (token.type & (MUL | DIV)) token_priority = 1;
+    if (token.type & (SUM | SUB))   token_priority = 0;
+    if (token.type & (MUL | DIV))   token_priority = 1;
+    if (token.type & UNARY_FLAG)    token_priority = 2;
 
     if (peek == NULL) return (int8_t)(0 - token_priority);
 
     int8_t peek_priority = -1;
-    if (peek->type & (SUM | SUB)) peek_priority = 0;
-    if (peek->type & (MUL | DIV)) peek_priority = 1;
+    if (peek->type & (SUM | SUB))   peek_priority = 0;
+    if (peek->type & (MUL | DIV))   peek_priority = 1;
+    if (peek->type & UNARY_FLAG)    peek_priority = 2;
 
     // PRINT("precedence: %i", peek_priority - token_priority);
 
@@ -281,7 +297,9 @@ static void TokenQueue_to_str(TokenQueue *queue, char *buffer) {
 
         switch (token.type) {
             case SUM:
+            case SUM | UNARY_FLAG:
             case SUB:
+            case SUB | UNARY_FLAG:
             case MUL:
             case DIV:
             case PAREN_OPEN:

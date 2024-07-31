@@ -40,14 +40,8 @@ static void eval_step(TreeNode *tree) {
         return;
     }
 
-    if (right_tree == NULL) {
-        PRINT("%c", (int32_t)tree->token.value);
-        RAISE("RightTree is NULL");
-    }
-
-    if (left_tree == NULL && right_tree->token.type == LITERAL && tree->token.type & (SUB | SUM)) {
+    if (right_tree->token.type == LITERAL && tree->token.type & UNARY_FLAG) {
         int64_t result = eval_node(tree);
-        PRINT("%li", result);
 
         tree->token.type = LITERAL;
         tree->token.value = result;
@@ -56,14 +50,14 @@ static void eval_step(TreeNode *tree) {
 
         tree->right = NULL;
         return;
-    } else if (left_tree == NULL && right_tree->token.type != LITERAL) {
+    } else if (tree->token.type & UNARY_FLAG) {
         eval_step(right_tree);
         return;
     }
 
-    if (left_tree == NULL) {
+    if (left_tree == NULL || right_tree == NULL) {
         PRINT("%c", (int32_t)tree->token.value);
-        RAISE("LeftTree is NULL");
+        RAISE("LeftTree | RightTree is NULL");
     }
 
     if (left_tree->token.type == LITERAL && right_tree->token.type == LITERAL) {
@@ -97,8 +91,8 @@ int64_t eval_node(TreeNode *tree) {
         return tree->token.value;
     }
 
-    if (left_node == NULL && right_node->token.type == LITERAL && tree->token.type & (SUB | SUM)) {
-        return (tree->token.type == SUB ? -1: 1) * right_node->token.value;
+    if (right_node->token.type == LITERAL && tree->token.type & UNARY_FLAG) {
+        return (tree->token.type & SUB ? -1: 1) * right_node->token.value;
     }
 
     if (left_node == NULL) {
@@ -135,6 +129,8 @@ void print_exp(TreeNode *tree) {
 
     if (tree->token.type == LITERAL) {
         OUTPUT("%li ", tree->token.value);
+    } else if (tree->token.type & UNARY_FLAG) {
+        OUTPUT("%c", (int32_t)tree->token.value);
     } else {
         OUTPUT("%c ", (int32_t)tree->token.value);
     }
