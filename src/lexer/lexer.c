@@ -217,17 +217,17 @@ static void shift_str_token(char **str, char dst[MAX_TOKEN_SIZE], uint8_t last_t
             break;
         }
 
+        if (!is_number(c) && c != '+' && c != '-' && c != '*' && c != '/' && c != '(' && c != ')') {
+            RAISE("Erro de sintaxe");
+        }
+
         dst[len++] = c;
         dst[len] = '\0';
         (*str)++;
 
         if (c == '(' || c == ')') break;
 
-        // && (last_token & (LITERAL | PAREN_CLOSE))
-        if (
-            c == '*'   ||
-            c == '/'
-        ) {
+        if (c == '*' || c == '/' || (c == '+' && (last_token & (LITERAL | PAREN_CLOSE))) || (c == '-' && (last_token & (LITERAL | PAREN_CLOSE)))) {
             if (last_token & OPERATOR) {
                 RAISE("Erro de sintaxe");
             }

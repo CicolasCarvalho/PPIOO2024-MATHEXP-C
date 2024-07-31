@@ -65,6 +65,7 @@ static TreeNode *TreeNode_build(RPNExp *exp, int32_t *i) {
     Token actual_token = exp->tokens[*i];
     TreeNode *node = TreeNode_new(actual_token);
 
+    PRINT("(%i, %i, %li)", *i, node->token.type, node->token.value);
     if (actual_token.type == LITERAL) {
         return node;
     }
@@ -82,7 +83,7 @@ static TreeNode *TreeNode_build(RPNExp *exp, int32_t *i) {
     }
 
     if (node->left == NULL || node->right == NULL) {
-        RAISE("RPN mal formada!");
+        RAISE("Erro de sintaxe");
     }
 
     return node;
