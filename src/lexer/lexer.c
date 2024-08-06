@@ -64,12 +64,12 @@ TokenExp *tokenize_str(char *str) {
         shift_str_token(&str, buffer, last_token);
         PRINT("'%s' - '%s'", buffer, str);
 
-        if (*buffer == '-' && (last_token & (OPERATOR | PAREN_OPEN) || last_token == NULL_OPS)) {
-            TokenExp_push(token_exp, SUB | UNARY_FLAG, '|');
-            last_token = SUB | UNARY_FLAG;
-        } else if (*buffer == '+' && (last_token & (OPERATOR | PAREN_OPEN) || last_token == NULL_OPS)) {
-            TokenExp_push(token_exp, SUM | UNARY_FLAG, 'x');
+        if (*buffer == '+' && (last_token & (OPERATOR | PAREN_OPEN) || last_token == NULL_OPS)) {
+            TokenExp_push(token_exp, SUM | UNARY_FLAG, '+');
             last_token = SUM | UNARY_FLAG;
+        } else if (*buffer == '-' && (last_token & (OPERATOR | PAREN_OPEN) || last_token == NULL_OPS)) {
+            TokenExp_push(token_exp, SUB | UNARY_FLAG, '-');
+            last_token = SUB | UNARY_FLAG;
         } else if (*buffer == '+') {
             TokenExp_push(token_exp, SUM, '+');
             last_token = SUM;
@@ -109,10 +109,6 @@ RPNExp *TokenExp_to_RPNExp(TokenExp *exp) {
 
     for (uint32_t i = 0; i < exp->size; ++i) {
         Token token = exp->tokens[i];
-
-        // PRINT("i: %i", i);
-        // TokenStack_print(operators_stack);
-        // TokenQueue_print(output_queue);
 
         if (token.type == LITERAL) {
             TokenQueue_enqueue(&output_queue, TokenQueue_new(token));
@@ -236,12 +232,7 @@ static void shift_str_token(char **str, char dst[MAX_TOKEN_SIZE], uint8_t last_t
 
         if (c == '(' || c == ')' || c == '+' || c == '-') break;
 
-        if (
-            // (c == '+' && (last_token & (LITERAL | PAREN_CLOSE))) ||
-            // (c == '-' && (last_token & (LITERAL | PAREN_CLOSE))) ||
-            c == '*' ||
-            c == '/'
-        ) {
+        if (c == '*' || c == '/') {
             if (last_token & OPERATOR) {
                 RAISE("Erro de sintaxe");
             }

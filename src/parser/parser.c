@@ -17,6 +17,9 @@ TreeNode *TokenTree_generate(TokenExp *exp) {
     TreeNode_print(token_tree, 0);
     END_LOG("TokenTree");
 
+    free(tokens->tokens);
+    free(tokens);
+
     return token_tree;
 }
 

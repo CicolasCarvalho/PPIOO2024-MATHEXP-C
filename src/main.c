@@ -20,6 +20,14 @@ int main(int argc, char **argv) {
     int64_t result = TokenTree_eval(tree);
 
     PRINT("Resultado: %li\n", result);
+
+    free(tokens->tokens);
+    free(tokens);
+
+    free(tree->left);
+    free(tree->right);
+    free(tree);
+
     return 0;
 }
 
