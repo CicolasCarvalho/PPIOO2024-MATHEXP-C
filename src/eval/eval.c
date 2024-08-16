@@ -9,7 +9,7 @@ static void print_exp(TreeNode *tree);
 
 //-functions------------------------------------------------------------------------------------------------------------
 
-int64_t TokenTree_eval(TreeNode *tree) {
+int64_t TokenTree_eval(TreeNode *tree, bool is_benchmark) {
     if (tree == NULL) {
         RAISE("TokenTree is NULL");
     }
@@ -17,14 +17,16 @@ int64_t TokenTree_eval(TreeNode *tree) {
     while (tree->token.type != LITERAL) {
         eval_step(tree);
 
-        START_LOG("TreeExpression");
-        print_exp(tree);
-        OUTPUT("\n");
-        END_LOG("TreeExpression");
+        if (!is_benchmark) {
+            START_LOG("TreeExpression");
+            print_exp(tree);
+            OUTPUT("\n");
+            END_LOG("TreeExpression");
 
-        START_LOG("EvalStep");
-        TreeNode_print(tree, 0);
-        END_LOG("EvalStep");
+            START_LOG("EvalStep");
+            TreeNode_print(tree, 0);
+            END_LOG("EvalStep");
+        }
     }
 
     return tree->token.value;

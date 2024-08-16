@@ -21,7 +21,8 @@ typedef struct {
 
 typedef TokenExp RPNExp;
 
-TokenExp *tokenize_str(char *str);
+TokenExp *tokenize_str(char *str, bool is_benchmark);
 RPNExp *TokenExp_to_RPNExp(TokenExp *exp);
+void TokenExp_print(TokenExp *exp);
 
 #endif //PPIOO2023_MATHEXP_C_LEXER_H

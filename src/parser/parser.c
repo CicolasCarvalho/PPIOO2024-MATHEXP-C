@@ -9,13 +9,21 @@ static TreeNode *TreeNode_build(RPNExp *exp, int32_t *i);
 
 //-function-------------------------------------------------------------------------------------------------------------
 
-TreeNode *TokenTree_generate(TokenExp *exp) {
+TreeNode *TokenTree_generate(TokenExp *exp, bool is_benchmark) {
     RPNExp *tokens = TokenExp_to_RPNExp(exp);
+
+    if (!is_benchmark) {
+        PRINT("RPN da expressão:");
+        TokenExp_print(tokens);
+    }
+    
     TreeNode *token_tree = TokenTree_from_RPNExp(tokens);
 
-    START_LOG("TokenTree");
-    TreeNode_print(token_tree, 0);
-    END_LOG("TokenTree");
+    if (!is_benchmark) {
+        START_LOG("TokenTree");
+        TreeNode_print(token_tree, 0);
+        END_LOG("TokenTree");
+    }
 
     free(tokens->tokens);
     free(tokens);

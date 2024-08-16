@@ -30,7 +30,6 @@ struct TokenQueue {
 
 static TokenExp *TokenExp_new(void);
 static void TokenExp_push(TokenExp *exp, uint8_t type, int64_t value);
-static void TokenExp_print(TokenExp *exp);
 
 static bool is_number(char c);
 static void shift_str_token(char **str, char dst[MAX_TOKEN_SIZE], uint8_t last_token);
@@ -53,7 +52,7 @@ static void TokenQueue_to_str(TokenQueue *queue, char *buffer);
 
 //-functions------------------------------------------------------------------------------------------------------------
 
-TokenExp *tokenize_str(char *str) {
+TokenExp *tokenize_str(char *str, bool is_benchmark) {
     TokenExp *token_exp = TokenExp_new();
 
     char buffer[MAX_TOKEN_SIZE];
@@ -62,13 +61,15 @@ TokenExp *tokenize_str(char *str) {
 
     do {
         shift_str_token(&str, buffer, last_token);
-        PRINT("'%s' - '%s'", buffer, str);
+        if (!is_benchmark) {
+            PRINT("'%s' - '%s'", buffer, str);
+        }
 
         if (*buffer == '+' && (last_token & (OPERATOR | PAREN_OPEN) || last_token == NULL_OPS)) {
-            TokenExp_push(token_exp, SUM | UNARY_FLAG, '+');
+            TokenExp_push(token_exp, SUM | UNARY_FLAG, '^');
             last_token = SUM | UNARY_FLAG;
         } else if (*buffer == '-' && (last_token & (OPERATOR | PAREN_OPEN) || last_token == NULL_OPS)) {
-            TokenExp_push(token_exp, SUB | UNARY_FLAG, '-');
+            TokenExp_push(token_exp, SUB | UNARY_FLAG, '/');
             last_token = SUB | UNARY_FLAG;
         } else if (*buffer == '+') {
             TokenExp_push(token_exp, SUM, '+');
@@ -95,7 +96,7 @@ TokenExp *tokenize_str(char *str) {
         }
     } while (*buffer != '\0');
 
-    TokenExp_print(token_exp);
+    if (!is_benchmark) TokenExp_print(token_exp);
 
     return token_exp;
 }
@@ -103,9 +104,6 @@ TokenExp *tokenize_str(char *str) {
 RPNExp *TokenExp_to_RPNExp(TokenExp *exp) {
     TokenStack *operators_stack = NULL;
     TokenQueue *output_queue = NULL;
-
-    uint32_t str_size = MAX_TOKEN_SIZE * exp->size;
-    char buffer[str_size];
 
     for (uint32_t i = 0; i < exp->size; ++i) {
         Token token = exp->tokens[i];
@@ -126,50 +124,15 @@ RPNExp *TokenExp_to_RPNExp(TokenExp *exp) {
             flush_stack_to_queue(&operators_stack, &output_queue, FLUSH_PAREN);
         }
     }
-    TokenStack_print(operators_stack);
-    TokenQueue_print(output_queue);
 
     flush_stack_to_queue(&operators_stack, &output_queue, FLUSH_ALL);
 
-    TokenQueue_to_str(output_queue, buffer);
-    PRINT("RPN da expressão:");
-    PRINT("%s (%lu bytes)", buffer, strlen(buffer));
-
     RPNExp *tokens = TokenExp_new();
     flush_queue_to_exp(&output_queue, tokens);
-
-    TokenExp_print(tokens);
     return tokens;
 }
 
-//-static---------------------------------------------------------------------------------------------------------------
-
-static TokenExp *TokenExp_new(void) {
-    TokenExp *token_exp = malloc(sizeof(TokenExp));
-
-    token_exp->tokens = malloc(sizeof(Token) * CHUNK_SIZE);
-    token_exp->size = 0;
-    token_exp->capacity = CHUNK_SIZE;
-
-    return token_exp;
-}
-
-static void TokenExp_push(TokenExp *exp, uint8_t type, int64_t value) {
-    if (exp == NULL) {
-        RAISE("NULL TokenExp");
-    }
-
-    if (exp->size + 1 > exp->capacity) {
-        void *tmp_tokens = realloc(exp->tokens, sizeof(Token) * exp->capacity * 2);
-        exp->tokens = tmp_tokens;
-        exp->capacity *= 2;
-    }
-
-    exp->tokens[exp->size] = (Token){.type = type, .value = value};
-    exp->size++;
-}
-
-static void TokenExp_print(TokenExp *exp) {
+void TokenExp_print(TokenExp *exp) {
     if (exp == NULL) {
         RAISE("NULL TokenExp");
     }
@@ -200,6 +163,33 @@ static void TokenExp_print(TokenExp *exp) {
 
     END_LOG("TokenExpression");
 }
+//-static---------------------------------------------------------------------------------------------------------------
+
+static TokenExp *TokenExp_new(void) {
+    TokenExp *token_exp = malloc(sizeof(TokenExp));
+
+    token_exp->tokens = malloc(sizeof(Token) * CHUNK_SIZE);
+    token_exp->size = 0;
+    token_exp->capacity = CHUNK_SIZE;
+
+    return token_exp;
+}
+
+static void TokenExp_push(TokenExp *exp, uint8_t type, int64_t value) {
+    if (exp == NULL) {
+        RAISE("NULL TokenExp");
+    }
+
+    if (exp->size + 1 > exp->capacity) {
+        void *tmp_tokens = realloc(exp->tokens, sizeof(Token) * exp->capacity * 2);
+        exp->tokens = tmp_tokens;
+        exp->capacity *= 2;
+    }
+
+    exp->tokens[exp->size] = (Token){.type = type, .value = value};
+    exp->size++;
+}
+
 
 static bool is_number(char c) {
     return (c >= 48 && c <= 57);
@@ -208,7 +198,7 @@ static bool is_number(char c) {
 static void shift_str_token(char **str, char dst[MAX_TOKEN_SIZE], uint8_t last_token) {
     dst[0] = '\0';
     uint8_t len = 0;
-    // trim dos espaços iniciais
+    // trim dos espa�os iniciais
     while ((**str) == ' ') (*str)++;
 
     while ((**str) != '\0' && (**str) != ' ') {

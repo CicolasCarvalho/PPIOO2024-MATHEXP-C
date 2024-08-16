@@ -16,7 +16,7 @@ struct TreeNode {
     TreeNode *right;
 };
 
-TreeNode *TokenTree_generate(TokenExp *tokenExp);
+TreeNode *TokenTree_generate(TokenExp *tokenExp, bool is_benchmark);
 void TreeNode_print(TreeNode *node, uint32_t level);
 
 
